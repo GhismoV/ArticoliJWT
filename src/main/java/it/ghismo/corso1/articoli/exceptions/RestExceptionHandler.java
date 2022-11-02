@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import it.ghismo.corso1.articoli.dto.ResultDto;
+import it.ghismo.corso1.articoli.errors.ResultEnum;
 import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
@@ -51,10 +52,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	public ResponseEntity<List<ResultDto>> handleUsernameNotFoundException(UsernameNotFoundException e) {
 		log.debug("Handling {}...", e.getClass().getSimpleName());
 		List<ResultDto> errors = new ArrayList<>();
+		/*
 		ResultDto dto = new ResultDto();
 		dto.setCode("FORMAT_ERROR: " + "AUEEEEEEE");
 		dto.setMessage("UEEEELAAAAAA");
-		errors.add(dto);
+		*/
+		errors.add(ResultEnum.TokenAuthenticationError.getDto());
 		return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
 	}
 

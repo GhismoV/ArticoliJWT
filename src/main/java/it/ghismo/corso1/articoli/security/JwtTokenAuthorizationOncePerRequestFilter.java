@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,7 +44,13 @@ public class JwtTokenAuthorizationOncePerRequestFilter extends OncePerRequestFil
 	@Override
 	@SneakyThrows
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) {
-		log.info(String.format("Authentication Request For '{}'", request.getRequestURL()));
+		log.info("Authentication Request For [{}] - [{}]", request.getMethod(), request.getRequestURL());
+		
+		if(HttpMethod.OPTIONS.matches(request.getMethod())) {
+			chain.doFilter(request, response);
+			return;
+		}
+		
 		final String requestTokenHeader = request.getHeader(this.tokenHeader);
 		log.warn("Token: " + requestTokenHeader);
 
@@ -61,7 +68,7 @@ public class JwtTokenAuthorizationOncePerRequestFilter extends OncePerRequestFil
 		} else {
 			log.warn("TOKEN NON VALIDO");
 		}
-		log.warn(String.format("JWT_TOKEN_USERNAME_VALUE '{}'", username));
+		log.warn("JWT_TOKEN_USERNAME_VALUE '{}'", username);
 		
 		try {
 			if (/*username != null && */SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -74,7 +81,7 @@ public class JwtTokenAuthorizationOncePerRequestFilter extends OncePerRequestFil
 			}
 			chain.doFilter(request, response);
 		} catch (Exception e) {
-            log.error("ghismo - mateaux - Spring Security Filter Chain Exception:", e);
+            log.error("Articoli Service: Spring Security Filter Chain Exception: {}", e.getLocalizedMessage());
             resolver.resolveException(request, response, null, e);
         }
 	}

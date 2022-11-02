@@ -85,6 +85,8 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 	    http
+	    /*.cors()
+	    .and()*/
 	    .csrf().disable()
 	    .exceptionHandling().authenticationEntryPoint(jwtUnAuthorizedResponseAuthenticationEntryPoint)
 	    .and()
