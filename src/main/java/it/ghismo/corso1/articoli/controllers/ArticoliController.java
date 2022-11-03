@@ -46,6 +46,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Validated
 public class ArticoliController {
+	
+	private static final String CODART_REGEX = "[A-Za-z0-9]{8,20}";
+	
 	@Autowired private ArticoliService articoliSvc;
 	
 	//@Autowired private BarcodeService barcodeSvc;
@@ -93,7 +96,7 @@ public class ArticoliController {
 	public ResponseEntity<ArticoliDto> cercaByArtCode(
 			@PathVariable(name = "codArt", required = true)
 			@NotNull
-			@Pattern(regexp = "[0-9]{8,13}")
+			@Pattern(regexp = CODART_REGEX)
 			String codArt) {
 		
 		log.debug("**** Cerchiamo di ottenere l'articolo attraverso il codice Articolo [{}] ****", codArt);
@@ -185,7 +188,7 @@ public class ArticoliController {
 	public ResponseEntity<ResultDto> deleteArt(
 			@PathVariable(name = "codArt", required = true)
 			@NotNull
-			@Pattern(regexp = "[0-9]{8,13}")
+			@Pattern(regexp = CODART_REGEX)
 			String codArt) {
 		log.debug("**** Cerchiamo di eliminare l'articolo [{}]", codArt);
 

@@ -69,6 +69,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 			ResultDto dto = new ResultDto();
 			dto.setCode("FORMAT_ERROR: " + violation.getPropertyPath().toString());
 			dto.setMessage(rb.getMessage(violation.getMessage(), null, LocaleContextHolder.getLocale()));
+			
+			log.error("ghismo errore:" + dto);
+			
 			errors.add(dto);
 		});
 		return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);

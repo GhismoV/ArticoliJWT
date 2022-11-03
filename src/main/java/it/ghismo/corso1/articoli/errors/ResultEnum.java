@@ -1,7 +1,12 @@
 package it.ghismo.corso1.articoli.errors;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import it.ghismo.corso1.articoli.adapters.LocalDateTimeSerializer;
 import it.ghismo.corso1.articoli.dto.ResultDto;
 
 public enum ResultEnum {
@@ -34,6 +39,10 @@ public enum ResultEnum {
 
 	,@Result(code = "7", msg = "Token di autenticazione non valido!!!")
 	TokenAuthenticationError
+	
+	,@Result(code = "8", msg = "Accesso Negato!!")
+	AccessDeniedError
+	
 	;
 	
 	public Result getResult() {
@@ -52,6 +61,14 @@ public enum ResultEnum {
 	public ResultDto getDto(Object... params) {
 		Result r = getResult();
 		return Objects.nonNull(r) ? new ResultDto(r.code(), String.format(r.msg(), params) ) : null; 
+	}
+	
+	public String getJson(Object... params) {
+		ResultDto out = this.getDto(params);
+		Gson gson = new GsonBuilder()
+				.registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
+				.create();
+		return gson.toJson(out);
 	}
 	
 }

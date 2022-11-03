@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
@@ -47,6 +48,8 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 	@Autowired
 	private JwtTokenAuthorizationOncePerRequestFilter jwtAuthenticationTokenFilter;
 
+	@Autowired
+	private AccessDeniedHandler accessDeniedHandler;
 
 	
 	@Bean
@@ -85,8 +88,8 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 	    http
-	    /*.cors()
-	    .and()*/
+	    .cors()
+	    .and()
 	    .csrf().disable()
 	    .exceptionHandling().authenticationEntryPoint(jwtUnAuthorizedResponseAuthenticationEntryPoint)
 	    .and()
@@ -96,8 +99,9 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 			.antMatchers(USER_SVC).hasRole("USER")
 			.antMatchers(ADMIN_SVC).hasRole("ADMIN")
 			.antMatchers("/login/**").anonymous()
-			.anyRequest().authenticated();
-	    
+			.anyRequest().authenticated()
+	    .and()
+	    .exceptionHandling().accessDeniedHandler(accessDeniedHandler);
 	    
 	    http.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -110,6 +114,7 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 	    return http.build();
 	}
 
+	
 	
 	/*
 	@Override
@@ -129,9 +134,9 @@ public class JWTWebSecurityConfig /*extends WebSecurityConfigurerAdapter*/ {
 	    	.ignoring()
 	    	//.antMatchers("/css/**", "/js/**", "/img/**", "/lib/**", "/favicon.ico")
 			.antMatchers(HttpMethod.OPTIONS, "/**")
-			.and()
+			/*.and() // ghismo - ho tolto sto pezzo perché sembra che non serve
 			.ignoring()
-			.antMatchers(HttpMethod.GET);
+			.antMatchers(HttpMethod.GET)*/;
 	}
 	
 }

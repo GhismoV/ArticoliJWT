@@ -7,8 +7,10 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.client.RestTemplate;
 
+import it.ghismo.corso1.articoli.security.CustomAccessDeniedHandler;
 import it.ghismo.corso1.articoli.security.ServiceConfig;
 
 
@@ -27,6 +29,12 @@ public class Config {
 	public ServiceConfig getGestuserConfig() {
 		return new ServiceConfig();
 	}
+	
+	@Bean
+	public AccessDeniedHandler accessDeniedHandler() {
+		return new CustomAccessDeniedHandler(); 
+	}
+
 	
 	
 }

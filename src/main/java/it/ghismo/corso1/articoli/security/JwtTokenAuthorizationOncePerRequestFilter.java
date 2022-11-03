@@ -37,7 +37,7 @@ public class JwtTokenAuthorizationOncePerRequestFilter extends OncePerRequestFil
 
 	
 	 @Autowired
-	 @Qualifier("handlerExceptionResolver") // ghismo serve!!!
+	 @Qualifier("handlerExceptionResolver") // ghismo ho verificato che è necessario!!!
 	 private HandlerExceptionResolver resolver;
 	 
 	 
@@ -84,5 +84,6 @@ public class JwtTokenAuthorizationOncePerRequestFilter extends OncePerRequestFil
             log.error("Articoli Service: Spring Security Filter Chain Exception: {}", e.getLocalizedMessage());
             resolver.resolveException(request, response, null, e);
         }
+		//chain.doFilter(request, response);
 	}
 }
