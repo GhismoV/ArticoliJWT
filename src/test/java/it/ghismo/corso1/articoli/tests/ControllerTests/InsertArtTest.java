@@ -97,18 +97,19 @@ public class InsertArtTest
 	@Order(1)
 	public void testInsArticolo() throws Exception
 	{
-		mockMvc.perform(MockMvcRequestBuilders.post("/api/articoli/inserisci")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(JsonData)
-				.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.code").value("0"))
-				.andExpect(jsonPath("$.message").value("Operazione eseguita correttamente sull'elemento [123Test]"))
-				.andDo(print());
+		mockMvc
+		.perform(MockMvcRequestBuilders.post("/api/articoli/inserisci")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(JsonData)
+			.accept(MediaType.APPLICATION_JSON))
+		.andExpect(status().isCreated())
+		.andExpect(jsonPath("$.code").value("0"))
+		.andExpect(jsonPath("$.message").value("Operazione eseguita correttamente sull'elemento [123Test]"))
+		.andDo(print());
 		
 		assertThat(repo.findByCodArt("123Test"))
-		.extracting(Articoli::getDescrizione)
-		.isEqualTo("ARTICOLO TEST");
+			.extracting(Articoli::getDescrizione)
+			.isEqualTo("ARTICOLO TEST");
 		
 	}
 	
