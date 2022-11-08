@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.User;
@@ -26,7 +27,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 	private ServiceConfig guc;
 	
 	@Autowired
+	@Qualifier("security-current-user")
+	private UtentiDto currentUser;
+	
+	@Autowired
 	private RestTemplate restClient;
+	
 	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -41,6 +47,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 			log.error(err);
 			throw new UsernameNotFoundException(err);
 		}
+		
+		// TODO - ghismo - voglio tenere in memoria le credenziali per parlare con PriceArt
+		BeanUtils.copyProperties(utenteTrovato, this.currentUser);
+		
 		return buildUser(utenteTrovato.getUserId(), utenteTrovato.getPassword(), utenteTrovato.getAttivo(), utenteTrovato.getRuoli());
 	}
 	
@@ -59,6 +69,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 	
 	private UserDetails buildUser(String un, String p, String attivo, List<String> roles) {
 		UserBuilder usersBuilder = User.builder();
+		
 		return usersBuilder
 				.username(un)
 				.password(p)

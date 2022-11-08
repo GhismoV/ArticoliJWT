@@ -1,7 +1,10 @@
 package it.ghismo.corso1.articoli.controllers;
 
+import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -11,6 +14,7 @@ import javax.validation.constraints.Pattern;
 
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpStatus;
@@ -24,10 +28,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import it.ghismo.corso1.articoli.clients.PriceClient;
 import it.ghismo.corso1.articoli.dto.ArticoliDto;
 import it.ghismo.corso1.articoli.dto.ResultDto;
 import it.ghismo.corso1.articoli.entities.Articoli;
@@ -36,6 +42,7 @@ import it.ghismo.corso1.articoli.errors.ResultEnum;
 import it.ghismo.corso1.articoli.exceptions.BindingValidationException;
 import it.ghismo.corso1.articoli.exceptions.DuplicateException;
 import it.ghismo.corso1.articoli.exceptions.NotFoundException;
+import it.ghismo.corso1.articoli.security.UtentiDto;
 import it.ghismo.corso1.articoli.services.ArticoliService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -47,14 +54,20 @@ import lombok.extern.slf4j.Slf4j;
 @Validated
 public class ArticoliController {
 	
-	private static final String CODART_REGEX = "[A-Za-z0-9]{8,20}";
+	private static final String CODART_REGEX = "[A-Za-z0-9]{5,20}";
 	
-	@Autowired private ArticoliService articoliSvc;
+	@Autowired
+	private ArticoliService articoliSvc;
 	
-	//@Autowired private BarcodeService barcodeSvc;
+	@Autowired
+	private PriceClient priceClient;
 	
 	@Autowired
 	private ResourceBundleMessageSource rb;
+	
+	@Autowired
+	@Qualifier("security-current-user")
+	private UtentiDto currentUser;
 	
 	
 	@GetMapping(value = "/testAuth", produces = {MediaType.APPLICATION_JSON_VALUE})
@@ -64,14 +77,20 @@ public class ArticoliController {
 	}
 	
 
-	@GetMapping(value = "/cerca/barcode/{barcode}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = {"/cerca/barcode/{barcode}", "/cerca/barcode/{barcode}/{idList}"}, produces = MediaType.APPLICATION_JSON_VALUE)
 	@Validated
 	@SneakyThrows
 	public ResponseEntity<ArticoliDto> cercaByBarcode(
 			@PathVariable(name = "barcode", required = true)
 			@NotNull
 			@Pattern(regexp = "[0-9]{8,13}")
-			String eanBarcode) {
+			String eanBarcode,
+			
+			@PathVariable(name = "idList", required = true)
+			Optional<String> idList,
+			
+			@RequestHeader("Authorization") String authToken
+			) {
 		
 		log.debug("**** Cerchiamo di ottenere l'articolo attraverso il codice EAN [{}] del barcode ****", eanBarcode);
 		/*
@@ -85,19 +104,28 @@ public class ArticoliController {
 		ArticoliDto articolo = articoliSvc.readByEan(eanBarcode);
 				
 		log.info("Articolo: {}", articolo);
+		log.info("Authorization: {}", authToken);
 		
 		if(articolo == null) throw new NotFoundException("Barcode", eanBarcode);
+		
+		recuperaPrezzo(authToken, idList, articolo);
 		
 		return new ResponseEntity<ArticoliDto>(articolo, HttpStatus.OK);
 	}
 
-	@GetMapping(value = "/cerca/codice/{codArt}", produces = MediaType.APPLICATION_JSON_VALUE)
+	@GetMapping(value = {"/cerca/codice/{codArt}", "/cerca/codice/{codArt}/{idList}"}, produces = MediaType.APPLICATION_JSON_VALUE)
 	@SneakyThrows
 	public ResponseEntity<ArticoliDto> cercaByArtCode(
 			@PathVariable(name = "codArt", required = true)
 			@NotNull
 			@Pattern(regexp = CODART_REGEX)
-			String codArt) {
+			String codArt,
+			
+			@PathVariable(name = "idList", required = true)
+			Optional<String> idList,
+
+			@RequestHeader("Authorization") String authToken
+			) {
 		
 		log.debug("**** Cerchiamo di ottenere l'articolo attraverso il codice Articolo [{}] ****", codArt);
 		
@@ -106,22 +134,32 @@ public class ArticoliController {
 		
 		if(articolo == null) throw new NotFoundException("L'Articolo", codArt);
 		
+		recuperaPrezzo(authToken, idList, articolo);
+
 		return new ResponseEntity<ArticoliDto>(articolo, HttpStatus.OK);
 	}
-	
-	@GetMapping(value = "/cerca/descrizione/{descr}", produces = MediaType.APPLICATION_JSON_VALUE)
+		
+	@GetMapping(value = {"/cerca/descrizione/{descr}", "/cerca/descrizione/{descr}/{idList}"}, produces = MediaType.APPLICATION_JSON_VALUE)
 	@Validated
 	@SneakyThrows
 	public ResponseEntity<List<ArticoliDto>> cercaByDescr(
 			@PathVariable(name = "descr", required = true)
 			@NotNull
-			String descr) {
+			String descr,
+
+			@PathVariable(name = "idList", required = true)
+			Optional<String> idList,
+			
+			@RequestHeader("Authorization") String authToken			
+			) {
 		
 		log.debug("**** Cerchiamo di ottenere l'articolo attraverso la descrizione[{}] ****", descr);
 		
 		List<ArticoliDto> articoli = articoliSvc.readByDescr(descr.toUpperCase());
 		log.info("Articoli: {}", articoli);
 		if(Objects.isNull(articoli) || articoli.isEmpty()) throw new NotFoundException("Articoli", descr);
+		
+		articoli.stream().forEach(a -> recuperaPrezzo(authToken, idList, a));
 		
 		return new ResponseEntity<List<ArticoliDto>>(articoli, HttpStatus.OK);
 	}
@@ -220,6 +258,19 @@ public class ArticoliController {
 			throw new BindingValidationException("Iva", -1);
 		}
 		return articoliSvc.read(articoloIn.getCodArt());
+	}
+	
+	private void recuperaPrezzo(String authToken, Optional<String> idListino, ArticoliDto articolo) {
+		Double prezzo = null;
+		try {
+			prezzo = priceClient.getPriceArt(/*authToken*/ this.currentUser, articolo.getCodArt(), idListino.orElse(null));
+		} catch (Exception e) {
+			//log.error("ghismo - ha scattaaaaaaaaat", e);
+		}
+		log.info("Prezzo restituito da PriceArt per [{}]: {}", articolo.getCodArt(), prezzo);
+		if(Objects.nonNull(prezzo)) {
+			articolo.setPrezzo(prezzo.doubleValue());
+		}
 	}
 	
 	

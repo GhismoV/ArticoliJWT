@@ -9,9 +9,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.support.BasicAuthenticationInterceptor;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.annotation.RequestScope;
 
 import it.ghismo.corso1.articoli.security.CustomAccessDeniedHandler;
 import it.ghismo.corso1.articoli.security.ServiceConfig;
+import it.ghismo.corso1.articoli.security.UtentiDto;
 
 
 
@@ -33,6 +35,12 @@ public class Config {
 	@Bean
 	public AccessDeniedHandler accessDeniedHandler() {
 		return new CustomAccessDeniedHandler(); 
+	}
+	
+	@Bean("security-current-user")
+	@RequestScope
+	public UtentiDto currentUser() {
+		return new UtentiDto();
 	}
 
 	

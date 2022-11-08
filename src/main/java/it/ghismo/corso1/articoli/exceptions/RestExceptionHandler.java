@@ -65,6 +65,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	public ResponseEntity<List<ResultDto>> handleConstraintViolationException(ConstraintViolationException e) {
 		log.debug("Handling {}...", e.getClass().getSimpleName());
 		List<ResultDto> errors = new ArrayList<>();
+		log.error("ghismo ConstraintViolationException", e);
 		e.getConstraintViolations().forEach(violation -> {
 			ResultDto dto = new ResultDto();
 			dto.setCode("FORMAT_ERROR: " + violation.getPropertyPath().toString());
